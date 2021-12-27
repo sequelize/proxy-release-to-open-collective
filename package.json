@@ -1,0 +1,14 @@
+{
+  "name": "proxy-release-to-open-collective",
+  "version": "1.0.0",
+  "description": "Takes a release object and proxies it to The OpenCollective",
+  "main": "index.js",
+  "repository": "git@github.com:sequelize/proxy-release-to-open-collective.git",
+  "author": "Sascha Depold <sascha@depold.com>",
+  "license": "MIT",
+  "dependencies": {
+    "@actions/core": "^1.6.0",
+    "@actions/github": "^5.0.0",
+    "showdown": "^1.9.1"
+  }
+}
