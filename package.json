@@ -12,5 +12,11 @@
     "graphql": "^16.2.0",
     "graphql-request": "^3.7.0",
     "showdown": "^1.9.1"
+  },
+  "devDependencies": {
+    "@vercel/ncc": "^0.33.1"
+  },
+  "scripts": {
+    "build": "ncc build index.js"
   }
 }
