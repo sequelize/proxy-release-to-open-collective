@@ -1,22 +1,24 @@
-on: [push]
+# on: [push]
 
-jobs:
-  hello_world_job:
-    runs-on: ubuntu-latest
-    name: A job to say hello
-    steps:
-      # To use this repository's private action,
-      # you must check out the repository
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Hello world action step
-        uses: ./ # Uses an action in the root directory
-        id: hello
-        with:
-          name: 'v1.2.3'
-          body: 'fancy pancy body'
-          slug: sequelize
-          apiKey: ${{ secrets.OPEN_COLLECTIVE_KEY }}
-      # Use the output from the `hello` step
-      # - name: Get the output time
-      #   run: echo "The time was ${{ steps.hello.outputs.time }}"
+# jobs:
+#   hello_world_job:
+#     runs-on: ubuntu-latest
+#     name: A job to say hello
+#     steps:
+#       # To use this repository's private action,
+#       # you must check out the repository
+#       - name: Checkout
+#         uses: actions/checkout@v2
+#       - uses: actions/setup-node@v2
+#         with:
+#           node-version: '14'
+#       - run: npm install
+#       - name: Hello world action step
+#         uses: ./ # Uses an action in the root directory
+#         id: hello
+#         with:
+#           releaseId: 56035002
+#           projectSlug: sequelize/sequelize
+#           ocSlug: sequelize
+#           ocApiKey: ${{ secrets.OPEN_COLLECTIVE_KEY }}
+#           githubToken: ${{ secrets.GITHUB_TOKEN }} 

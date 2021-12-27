@@ -1,21 +1,21 @@
 name: 'Proxy Release to The OpenCollective'
 description: 'Takes a release object and proxies it to The OpenCollective'
 inputs:
-  name: 
-    description: 'The name of the GitHub Release'
+  releaseId: 
+    description: 'The id of the GitHub Release'
     required: true
-  body: 
-    description: 'The body of the GitHub Release'
+  projectSlug:
+    description: 'The slug of the GitHub project (e.g. sequelize/sequelize)'
     required: true
-  slug: 
+  ocSlug: 
     description: 'The slug of the OpenCollective account'
     required: true
-  apiKey: 
+  ocApiKey: 
     description: 'The OpenCollective API Key'
     required: true
-outputs:
-  id: 
-    description: 'The id of the newly created update object'
+  githubToken: 
+    description: 'A GitHub Access Token'
+    required: true
 runs:
   using: 'node12'
   main: 'index.js'

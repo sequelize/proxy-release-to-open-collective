@@ -9,6 +9,8 @@
   "dependencies": {
     "@actions/core": "^1.6.0",
     "@actions/github": "^5.0.0",
+    "graphql": "^16.2.0",
+    "graphql-request": "^3.7.0",
     "showdown": "^1.9.1"
   }
 }
