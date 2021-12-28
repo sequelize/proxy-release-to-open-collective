@@ -19244,7 +19244,11 @@ async function postOnOpenCollective(release) {
   const { name, body } = release;
   const title = `Release of Sequelize ${name}`;
   const _html = markdown.makeHtml(body);
-  const html = _html.replace(/"/g, '\\"').replace(/\n/g, "\\n");
+  const html = _html
+    .replace(/"/g, '\\"')
+    .replace(/\n/g, "\\n")
+    .replace("<h1>", "<h2>")
+    .replace("</h1>", "</h2>");
 
   const query = gql`
     mutation {
