@@ -19033,6 +19033,166 @@ function wrappy (fn, cb) {
 
 /***/ }),
 
+/***/ 8505:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+const core = __nccwpck_require__(2186);
+const github = __nccwpck_require__(5438);
+const showdown = __nccwpck_require__(1872);
+const { GraphQLClient, gql } = __nccwpck_require__(2476);
+
+const markdown = new showdown.Converter();
+
+async function getRepo({ projectSlug, githubToken }) {
+  const [owner, repo] = projectSlug.split("/");
+  const octokit = github.getOctokit(githubToken);
+
+  const { data } = await octokit.request("GET /repos/{owner}/{repo}", {
+    owner,
+    repo,
+  });
+
+  core.debug(data);
+
+  return data;
+}
+
+function sanitizeProjectName(repo) {
+  const fragments = new Set(
+    repo.full_name
+      .split("/")
+      .map((s) => [s[0].toUpperCase(), s.slice(1)].join(""))
+  );
+
+  return Array.from(fragments).join(" ");
+}
+
+async function getRelease({ releaseId, projectSlug, githubToken }) {
+  const [owner, repo] = projectSlug.split("/");
+
+  core.info("Input params:");
+  core.info(`Release ID: ${releaseId}`);
+  core.info(`GitHub Project Slug: ${owner}/${repo}`);
+
+  const octokit = github.getOctokit(githubToken);
+
+  const { data } = await octokit.request(
+    "GET /repos/{owner}/{repo}/releases/{releaseId}",
+    { owner, repo, releaseId }
+  );
+
+  core.debug(data);
+
+  return data;
+}
+
+async function postOnOpenCollective({
+  release,
+  ocSlug,
+  ocApiKey,
+  projectName,
+}) {
+  core.info(`OpenCollective Slug: ${ocSlug}`);
+
+  const { name, body } = release;
+  const title = `Release of ${projectName} ${name}`;
+  const _html = markdown.makeHtml(body);
+  const html = _html
+    .replace(/"/g, '\\"')
+    .replace(/\n/g, "\\n")
+    .replace("<h1>", "<h2>")
+    .replace("</h1>", "</h2>");
+
+  const query = gql`
+    mutation {
+      createUpdate(update: { 
+        title: \"${title}\", 
+        html: \"${html}\", 
+        account: {slug: \"${ocSlug}\"} 
+      }) {
+        id
+        title
+      }
+    }
+  `;
+  const endpoint = "https://api.opencollective.com/graphql/v2";
+  const client = new GraphQLClient(endpoint, {
+    headers: { "Api-Key": ocApiKey },
+  });
+  const { createUpdate } = await client.request(query);
+
+  core.info(JSON.stringify(createUpdate));
+
+  return createUpdate;
+}
+
+async function publishUpdateOnOpenCollective({ update, ocApiKey }) {
+  const query = gql`
+    mutation {
+      publishUpdate(id:"${update.id}") { id }
+    }
+  `;
+  const endpoint = "https://api.opencollective.com/graphql/v2";
+  const client = new GraphQLClient(endpoint, {
+    headers: { "Api-Key": ocApiKey },
+  });
+
+  core.info(query);
+  await client.request(query);
+}
+
+module.exports = {
+  getRelease,
+  postOnOpenCollective,
+  publishUpdateOnOpenCollective,
+  getRepo,
+  sanitizeProjectName,
+};
+
+
+/***/ }),
+
+/***/ 4351:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+const {
+  getRepo,
+  getRelease,
+  sanitizeProjectName,
+  postOnOpenCollective,
+  publishUpdateOnOpenCollective,
+} = __nccwpck_require__(8505);
+
+module.exports = async function proxy({
+  releaseId,
+  projectSlug,
+  githubToken,
+  ocSlug,
+  ocApiKey,
+}) {
+  const repo = await getRepo({ projectSlug, githubToken });
+  const release = await getRelease({
+    releaseId,
+    projectSlug,
+    githubToken,
+  });
+  const projectName = sanitizeProjectName(repo);
+  const update = await postOnOpenCollective({
+    release,
+    ocSlug,
+    ocApiKey,
+    projectName,
+  });
+
+  await publishUpdateOnOpenCollective({
+    update,
+    ocApiKey,
+  });
+};
+
+
+/***/ }),
+
 /***/ 2877:
 /***/ ((module) => {
 
@@ -19210,96 +19370,20 @@ module.exports = JSON.parse('[[[0,44],"disallowed_STD3_valid"],[[45,46],"valid"]
 var __webpack_exports__ = {};
 // This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
 (() => {
-const core = __nccwpck_require__(2186);
-const github = __nccwpck_require__(5438);
-const showdown = __nccwpck_require__(1872);
-const { GraphQLClient, gql } = __nccwpck_require__(2476);
+const proxy = __nccwpck_require__(4351);
 
-const markdown = new showdown.Converter();
-
-async function getRelease() {
-  const releaseId = core.getInput("releaseId");
-  const [owner, repo] = core.getInput("projectSlug").split("/");
-  const slug = core.getInput("ocSlug");
-
-  core.info("Input params:");
-  core.info(`Release ID: ${releaseId}`);
-  core.info(`GitHub Project Slug: ${owner}/${repo}`);
-  core.info(`OpenCollective Slug: ${slug}`);
-
-  const githubToken = core.getInput("githubToken");
-  const octokit = github.getOctokit(githubToken);
-
-  const { data } = await octokit.request(
-    "GET /repos/{owner}/{repo}/releases/{releaseId}",
-    { owner, repo, releaseId }
-  );
-
-  core.debug(data);
-
-  return data;
-}
-
-async function postOnOpenCollective(release) {
-  const { name, body } = release;
-  const title = `Release of Sequelize ${name}`;
-  const _html = markdown.makeHtml(body);
-  const html = _html
-    .replace(/"/g, '\\"')
-    .replace(/\n/g, "\\n")
-    .replace("<h1>", "<h2>")
-    .replace("</h1>", "</h2>");
-
-  const query = gql`
-    mutation {
-      createUpdate(update: { 
-        title: \"${title}\", 
-        html: \"${html}\", 
-        account: {slug: \"sequelize\"} 
-      }) {
-        id
-        title
-      }
-    }
-  `;
-  const apiKey = core.getInput("ocApiKey");
-  const endpoint = "https://api.opencollective.com/graphql/v2";
-  const client = new GraphQLClient(endpoint, {
-    headers: { "Api-Key": apiKey },
+try {
+  proxy({
+    releaseId: core.getInput("releaseId"),
+    projectSlug: core.getInput("projectSlug"),
+    githubToken: core.getInput("githubToken"),
+    ocSlug: core.getInput("ocSlug"),
+    ocApiKey: core.getInput("ocApiKey"),
   });
-  const { createUpdate } = await client.request(query);
-
-  core.info(JSON.stringify(createUpdate));
-
-  return createUpdate;
+} catch (error) {
+  core.error(error);
+  core.setFailed(error.message);
 }
-
-async function publishUpdateOnOpenCollective(update) {
-  const query = gql`
-    mutation {
-      publishUpdate(id:"${update.id}") { id }
-    }
-  `;
-  const apiKey = core.getInput("ocApiKey");
-  const endpoint = "https://api.opencollective.com/graphql/v2";
-  const client = new GraphQLClient(endpoint, {
-    headers: { "Api-Key": apiKey },
-  });
-
-  core.info(query);
-  await client.request(query);
-}
-
-(async () => {
-  try {
-    const release = await getRelease();
-    const update = await postOnOpenCollective(release);
-    await publishUpdateOnOpenCollective(update);
-  } catch (error) {
-    core.error(error);
-    core.setFailed(error.message);
-  }
-})();
 
 })();
 

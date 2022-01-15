@@ -17,6 +17,7 @@
     "@vercel/ncc": "^0.33.1"
   },
   "scripts": {
-    "build": "ncc build index.js"
+    "build": "ncc build index.js",
+    "test": "node test/*.js"
   }
 }
