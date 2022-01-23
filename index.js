@@ -1,3 +1,4 @@
+const core = require("@actions/core");
 const proxy = require("./src");
 
 try {

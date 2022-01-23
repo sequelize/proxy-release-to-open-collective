@@ -19370,6 +19370,7 @@ module.exports = JSON.parse('[[[0,44],"disallowed_STD3_valid"],[[45,46],"valid"]
 var __webpack_exports__ = {};
 // This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
 (() => {
+const core = __nccwpck_require__(2186);
 const proxy = __nccwpck_require__(4351);
 
 try {
